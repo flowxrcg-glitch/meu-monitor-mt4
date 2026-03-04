@@ -4,7 +4,7 @@ from supabase import create_client
 from streamlit_autorefresh import st_autorefresh
 
 # 1. Suas chaves (Pegue no Supabase > Settings > API)
-URL = "https://jxhxbwgebugoumvdcauq.supabase.com"
+URL = "https://jxhxbwgebugoumvdcauq.supabase.co"
 KEY = "sb_publishable_CFuI4WNUUlLypU4n08VqGw_RDLt_pG-"
 supabase = create_client(URL, KEY)
 
@@ -23,4 +23,5 @@ try:
         st.write("Aguardando dados da VPS...")
 except Exception as e:
     st.error(f"Erro de conexão: {e}")
+
 
