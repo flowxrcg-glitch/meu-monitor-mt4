@@ -3,7 +3,7 @@ import pandas as pd
 from supabase import create_client
 from streamlit_autorefresh import st_autorefresh
 
-# 1. Suas chaves (Mantenha as que você já tem)
+# 1. Suas chaves (Não mude nada aqui)
 URL = "https://jxhxbwgebugoumvdcauq.supabase.co"
 KEY = "sb_publishable_CFuI4WNUUlLypU4n08VqGw_RDLt_pG-"
 supabase = create_client(URL, KEY)
@@ -11,41 +11,43 @@ supabase = create_client(URL, KEY)
 # 2. Configuração da Página e Tema Preto
 st.set_page_config(page_title="Painel FlowX", layout="wide")
 
-# CSS para forçar o fundo preto e textos claros
 st.markdown("""
     <style>
-    .main { background-color: #000000; }
-    header { visibility: hidden; }
-    .stTable { background-color: #000000; color: #ffffff; }
-    h1 { color: #ffffff; font-family: 'Segoe UI'; }
+    .main { background-color: #000000 !important; }
+    .stTable { background-color: #000000 !important; color: #ffffff !important; }
+    h1 { color: #ffffff !important; font-family: 'Segoe UI'; }
+    p { color: #888 !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Atualiza o site sozinho a cada 10 segundos
-st_autorefresh(interval=10000, key="flowx_refresh")
+# Atualiza o site sozinho a cada 5 segundos
+st_autorefresh(interval=5000, key="flowx_refresh")
 
 st.markdown("<h1>Painel FlowX</h1>", unsafe_allow_html=True)
-st.markdown("<hr style='border: 0.5px solid #333;'>", unsafe_allow_html=True)
+st.markdown("<p>Monitoramento em tempo real via VPS</p>", unsafe_allow_html=True)
 
-# 4. Puxa os últimos dados gravados no banco
+# 3. Puxa os dados
 try:
-    # Buscamos todos os dados da tabela
     response = supabase.table("trading_signals").select("*").execute()
-    df = pd.DataFrame(response.data)
-
-    if not df.empty:
-        # Organiza por moeda (A-Z)
-        df = df.sort_values("moeda")
+    
+    if response.data:
+        df = pd.DataFrame(response.data)
         
-        # Renomeia as colunas para ficar mais amigável no painel
+        # --- O PULO DO GATO PARA CORRIGIR O ERRO ---
+        # Aqui a gente seleciona APENAS as colunas que o seu MT4 envia
+        colunas_que_queremos = ["moeda", "mn1", "w1", "d1", "h4", "h1", "sinal"]
+        
+        # Filtra o DataFrame para pegar só essas 7 (ignora id ou created_at)
+        df = df[colunas_que_queremos]
+        
+        # Agora sim renomeamos sem erro, pois garantimos que só existem 7 colunas
         df.columns = ["Moeda", "MN1", "W1", "D1", "H4", "H1", "Sinal"]
         
-        # Exibe a tabela
-        st.table(df)
+        # Organiza de A-Z e exibe
+        st.table(df.sort_values("Moeda"))
         
-        st.success("Conectado: Exibindo últimos dados recebidos da VPS.")
     else:
-        st.warning("O banco de dados está vazio. Aguardando a abertura do mercado para receber novos dados.")
+        st.info("Banco de dados conectado. Aguardando a primeira entrega de dados do MetaTrader...")
 
 except Exception as e:
-    st.error(f"Erro ao acessar o banco de dados: {e}")
+    st.error(f"Erro técnico: {e}")
