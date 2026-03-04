@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Monitor Trade - Dashboard</title>
+    <style>
+        body { font-family: Arial; background: #1a1a1a; color: white; text-align: center; padding: 50px; }
+        .status { color: #00ff00; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>📊 Painel de Monitoramento MT4</h1>
+    <p>Status do Servidor: <span class="status">Online</span></p>
+    <hr>
+    <p>Em breve: Dados em tempo real vindos da VPS.</p>
+</body>
+</html>
