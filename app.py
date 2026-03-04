@@ -1,42 +1,25 @@
 import streamlit as st
 import pandas as pd
-import sqlite3
+from supabase import create_client
+from streamlit_autorefresh import st_autorefresh
 
-st.set_page_config(page_title="FLOWX GTA Monitor", layout="wide")
+# 1. Suas chaves (Pegue no Supabase > Settings > API)
+URL = "https://supabase.com/dashboard/project/jxhxbwgebugoumvdcauq/settings/api-keys"
+KEY = "sb_publishable_CFuI4WNUUlLypU4n08VqGw_RDLt_pG-"
+supabase = create_client(URL, KEY)
 
-# Função para estilizar as células como o MT4
-def color_signal(val):
-    if "FORÇA" in str(val) or "ALTA" in str(val): color = '#00ff96' # Verde FlowX
-    elif "QUEDA" in str(val) or "BAIXA" in str(val): color = '#ff2d50' # Vermelho FlowX
-    else: color = '#78787d' # Muted
-    return f'background-color: {color}; color: black; font-weight: bold'
+# 2. Atualiza o site sozinho a cada 5 segundos
+st_autorefresh(interval=5000, key="flowx_refresh")
 
-st.title("💜 FLOWX | GTA Ultra Fractal - Live Mirror")
+st.markdown("<h1 style='color: #a020f0;'>💜 FLOWX | GTA Monitor</h1>", unsafe_allow_html=True)
 
-# Simulando a leitura do banco de dados que a VPS vai alimentar
-# (Depois conectaremos o SQLite aqui)
+# 3. Puxa os dados do banco
 try:
-    # Exemplo de como os dados chegarão via Pandas
-    data = {
-        'Moeda': ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'NZD'],
-        'MN1': [0.15, -0.22, 0.05, -0.40, 0.10, 0.02, -0.01, 0.12],
-        'W1': [0.25, -0.10, 0.12, -0.35, 0.08, 0.05, -0.05, 0.15],
-        'D1': [0.30, 0.05, 0.20, -0.30, 0.15, 0.08, -0.10, 0.20],
-        'H4': [0.22, 0.12, 0.25, -0.20, 0.18, 0.10, -0.15, 0.25],
-        'H1': [0.18, 0.15, 0.30, -0.15, 0.20, 0.12, -0.20, 0.30],
-        'SINAL': ['FORÇA TOTAL', 'AGUARDE', 'PERMISSÃO ALTA', 'QUEDA TOTAL', 'AGUARDE', 'AGUARDE', 'RETORNO OK', 'FORÇA']
-    }
-    df = pd.DataFrame(data)
-
-    # Exibição do Dashboard
-    st.subheader("Painel de Força de Moedas (CSS)")
-    
-    # Aplicando estilo de cores nas colunas
-    styled_df = df.style.applymap(color_signal, subset=['SINAL'])
-    
-    st.table(styled_df)
-
+    data = supabase.table("trading_signals").select("*").execute()
+    df = pd.DataFrame(data.data)
+    if not df.empty:
+        st.table(df.sort_values("moeda")) # Mostra a tabela organizada
+    else:
+        st.write("Aguardando dados da VPS...")
 except Exception as e:
-    st.error("Aguardando conexão com a VPS...")
-
-st.info("Atualizado em tempo real via MT4 WebRequest")
+    st.error(f"Erro de conexão: {e}")
